@@ -1,0 +1,45 @@
+name: art_vibes1
+description: "A new Flutter project."
+
+publish_to: 'none' 
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^3.5.0
+  firebase_auth: ^5.3.0
+  cloud_firestore: ^5.4.2
+  firebase_data_connect: ^0.1.1
+  google_fonts: ^5.0.0
+  cupertino_icons: ^1.0.8
+  url_launcher: ^6.0.20
+  google_maps_flutter: ^2.2.5 # Add this line for Google Maps
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/Art_vibes_Logo.png
+    - assets/images/image1.png
+    - assets/images/image2.png
+    - assets/images/image3.png
+    - assets/images/image4.png
+    - assets/images/image5.png
+    - assets/images/image6.png
+    - assets/images/image7.png
+    - assets/images/image8.png
+    - assets/images/image9.png
+    - assets/images/image10.png
+    - assets/images/image11.png
+    - assets/images/image12.png
+    - assets/images/image13.png
