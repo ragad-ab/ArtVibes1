@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "57207556984",
+    "project_id": "fir-2-d7965",
+    "storage_bucket": "fir-2-d7965.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:57207556984:android:17405da9c3898a8451d68d",
+        "android_client_info": {
+          "package_name": "com.example.art_vibes1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvVQpvinIX8wUx2Dxazv0f8dUjIDfuFdY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

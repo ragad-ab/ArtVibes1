@@ -1,0 +1,45 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services" // Add this line
+}
+
+android {
+    namespace "com.example.art_vibes1"
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId "com.example.art_vibes1"
+        minSdkVersion 23
+        targetSdkVersion 34
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+dependencies {
+    implementation platform("com.google.firebase:firebase-bom:33.3.0")
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-storage'
+    implementation 'com.google.android.gms:play-services-maps:18.0.2' // For Google Maps
+    implementation 'com.google.firebase:firebase-appcheck-playintegrity' // For Firebase App Check with Play Integrity
+    implementation 'com.google.firebase:firebase-messaging:23.0.9' // Use the latest version
+}
+apply plugin: 'com.google.gms.google-services' // Apply Google services plugin
