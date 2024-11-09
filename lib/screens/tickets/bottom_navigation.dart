@@ -1,8 +1,8 @@
 import 'package:art_vibes1/profile/profile_screen.dart';
+import 'package:art_vibes1/screens/tickets/ticket.dart';
 import 'package:art_vibes1/tracking/tracking_screen.dart';
 import 'package:flutter/material.dart';
-import 'upcoming.dart'; // Import UpcomingPage
-import 'home_screen.dart'; // Import HomeScreen
+import 'home_screen.dart'; 
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -29,7 +29,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
           // Navigate to UpcomingPage
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const UpcomingPage()),
+            MaterialPageRoute(builder: (context) =>  TicketsScreen()),
           );
         } else if (index == 2) {
           // Navigate to TrackingScreen

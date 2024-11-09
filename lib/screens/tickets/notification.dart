@@ -1,9 +1,9 @@
-import 'package:art_vibes1/profile/profile_screen.dart';
-import 'package:art_vibes1/screens/tickets/bottom_navigation.dart';
-import 'package:art_vibes1/screens/tickets/home_Screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:art_vibes1/profile/profile_screen.dart';
+import 'package:art_vibes1/screens/tickets/bottom_navigation.dart';
+import 'package:art_vibes1/screens/tickets/home_Screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({Key? key}) : super(key: key);
@@ -15,7 +15,6 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   int _currentIndex = 0;
 
   void _deleteNotification(String docId) {
@@ -54,20 +53,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back,
-                color: Colors.white), // White arrow
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
         title: Column(
           children: [
-            const SizedBox(height: 50), // Move the logo slightly down
+            const SizedBox(height: 50),
             Image.asset(
               'assets/images/Art_vibes_Logo.png',
-              height: 80, // Ensure consistent logo size
+              height: 80,
               fit: BoxFit.contain,
             ),
-            const SizedBox(height: 50), // Adjust spacing below logo
+            const SizedBox(height: 50),
             const Text(
               'Notifications',
               style: TextStyle(
@@ -82,8 +80,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       body: user == null
           ? const Center(child: Text("Please log in to view notifications."))
           : Padding(
-              padding:
-                  const EdgeInsets.only(top: 16.0), // Slight padding below logo
+              padding: const EdgeInsets.only(top: 16.0),
               child: StreamBuilder<QuerySnapshot>(
                 stream: _firestore
                     .collection('notifications')
@@ -134,14 +131,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           ),
                           subtitle: Text(
                             notificationData['body'] ?? 'No Details',
-                            style: const TextStyle(
-                              color: Colors.black54,
-                            ),
+                            style: const TextStyle(color: Colors.black54),
                           ),
                           trailing: IconButton(
                             icon: const Icon(
                               Icons.delete,
-                              color: Color(0xFFFF7043), // Orange background
+                              color: Color(0xFFFF7043),
                             ),
                             onPressed: () {
                               _deleteNotification(notification.id);

@@ -1,8 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-//this
+import 'package:art_vibes1/signup/login/Auth_Screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -14,7 +13,9 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
   late Stream<QuerySnapshot> _pendingPortfoliosStream;
+  late Stream<QuerySnapshot> _pendingLicensesStream;
 
   @override
   void initState() {
@@ -23,21 +24,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         .collection('portfolios')
         .where('status', isEqualTo: 'pending')
         .snapshots();
+    _pendingLicensesStream = _firestore
+        .collection('licenses')
+        .where('status', isEqualTo: 'pending')
+        .snapshots();
   }
 
-  void _viewPortfolioFile(String filePath) {
+  void _viewFile(String fileUrl, String type) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PortfolioViewerScreen(filePath: filePath),
+        builder: (context) => FileViewerScreen(fileUrl: fileUrl, type: type),
       ),
     );
   }
 
   void _logOut(BuildContext context) async {
     await _auth.signOut();
-    Navigator.pushReplacementNamed(
-        context, '/login'); // Adjust route if necessary
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => AuthScreen()),
+    );
   }
 
   @override
@@ -63,12 +70,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               width: 40,
               height: 40,
               decoration: const BoxDecoration(
-                color: Color(0xFF008080), // Blue color
+                color: Color(0xFF008080),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.person,
-                color: Colors.white, // White profile icon
+                color: Colors.white,
                 size: 24,
               ),
             ),
@@ -76,15 +83,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         title: Column(
           children: [
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
             Image.asset(
               'assets/images/Art_vibes_Logo.png',
-              height: 80,
+              height: 60,
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 8),
             const Text(
-              "Pending Portfolios",
+              "Admin Dashboard",
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -99,7 +106,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           children: [
             const SizedBox(height: 20),
             _buildSectionTitle('Pending Portfolios'),
-            _buildPendingItemsList(_pendingPortfoliosStream),
+            _buildPendingItemsList(_pendingPortfoliosStream, 'portfolio'),
+            const SizedBox(height: 20),
+            _buildSectionTitle('Pending Licenses'),
+            _buildPendingItemsList(_pendingLicensesStream, 'license'),
           ],
         ),
       ),
@@ -116,27 +126,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildPendingItemsList(Stream<QuerySnapshot> stream) {
+  Widget _buildPendingItemsList(Stream<QuerySnapshot> stream, String type) {
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const CircularProgressIndicator();
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final documents = snapshot.data!.docs;
+        if (documents.isEmpty) {
+          return const Center(child: Text("No pending items."));
+        }
+
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: snapshot.data!.docs.length,
+          itemCount: documents.length,
           itemBuilder: (context, index) {
-            var data =
-                snapshot.data!.docs[index].data() as Map<String, dynamic>;
+            var data = documents[index].data() as Map<String, dynamic>;
             String artistName = data['artistName'] ?? 'Unnamed Artist';
             String email = data['email'] ?? 'No Email Provided';
-            String portfolioId = snapshot.data!.docs[index].id;
+            String itemId = documents[index].id;
             String artistId = data['artistId'];
-            String filePath = data['files'][0];
+            String? fileUrl = data['fileUrl']; // URL from Firebase Storage
 
             return Card(
-              margin: const EdgeInsets.symmetric(vertical: 5),
-              elevation: 2,
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              elevation: 3,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -151,25 +168,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   children: [
                     ElevatedButton(
                       onPressed: () =>
-                          _updateStatus(portfolioId, artistId, 'approved'),
+                          _updateStatus(itemId, artistId, 'approved', type),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4CAF50),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text("Approve"),
+                      child: const Text("Approve",
+                          style: TextStyle(color: Colors.white)),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () =>
-                          _updateStatus(portfolioId, artistId, 'rejected'),
+                          _updateStatus(itemId, artistId, 'rejected', type),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFF7043),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text("Reject"),
+                      child: const Text("Reject",
+                          style: TextStyle(color: Colors.white)),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.open_in_new),
-                      onPressed: () => _viewPortfolioFile(filePath),
-                    ),
+                    if (fileUrl != null)
+                      IconButton(
+                        icon: const Icon(Icons.open_in_new),
+                        color: Colors.blueAccent,
+                        onPressed: () => _viewFile(fileUrl, type),
+                      ),
                   ],
                 ),
               ),
@@ -181,12 +210,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _updateStatus(
-      String portfolioId, String artistId, String status) async {
-    await _firestore.collection('portfolios').doc(portfolioId).update({
+      String itemId, String artistId, String status, String type) async {
+    String collectionName = type == 'portfolio' ? 'portfolios' : 'licenses';
+    await _firestore.collection(collectionName).doc(itemId).update({
       'status': status,
     });
 
-    if (status == 'approved') {
+    if (type == 'portfolio' && status == 'approved') {
       await _firestore.collection('users').doc(artistId).update({
         'role': 'artist',
       });
@@ -194,37 +224,55 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 }
 
-class PortfolioViewerScreen extends StatelessWidget {
-  final String filePath;
+class FileViewerScreen extends StatelessWidget {
+  final String fileUrl;
+  final String type;
 
-  const PortfolioViewerScreen({required this.filePath, Key? key})
+  const FileViewerScreen({required this.fileUrl, required this.type, Key? key})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(120.0),
+        preferredSize: const Size.fromHeight(100.0),
         child: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          centerTitle: true,
-          title: const Text(
-            "Portfolio File",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+          automaticallyImplyLeading: false,
+          title: Row(
+            children: [
+              Container(
+                margin: const EdgeInsets.all(8.0),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF7043),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                type == 'portfolio' ? "Portfolio File" : "License File",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const Spacer(),
+            ],
           ),
         ),
       ),
       body: Center(
-        child: Image.file(
-          File(filePath),
+        child: Image.network(
+          fileUrl,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
-            return Text('Failed to load file: $filePath');
+            return const Text('Failed to load image from URL');
           },
         ),
       ),

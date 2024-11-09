@@ -1,18 +1,21 @@
-import 'package:art_vibes1/artist/Artist_List_Screen.dart';
-import 'package:art_vibes1/artist_events/event_calendar_screen.dart';
-import 'package:art_vibes1/gallery_museum/gallery_list.dart';
-import 'package:art_vibes1/profile/profile_screen.dart';
-import 'package:art_vibes1/screens/tickets/bottom_navigation.dart';
-import 'package:art_vibes1/screens/tickets/notification.dart';
-import 'package:art_vibes1/signup/login/Auth_Screen.dart';
-import 'package:art_vibes1/tracking/tracking_screen.dart';
-import 'package:art_vibes1/screens/tickets/upcoming.dart';
-import 'package:art_vibes1/artist_upload_portfolio/upload_portfolio.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+// Import your screens
+import 'package:art_vibes1/artist/Artist_List_Screen.dart';
+import 'package:art_vibes1/artist_events/event_calendar_screen.dart';
+import 'package:art_vibes1/artist_events/artist_license.dart';
+import 'package:art_vibes1/gallery_museum/gallery_list.dart';
+import 'package:art_vibes1/profile/profile_screen.dart';
+import 'package:art_vibes1/screens/tickets/bottom_navigation.dart';
+import 'package:art_vibes1/screens/tickets/notification.dart';
+import 'package:art_vibes1/screens/tickets/ticket.dart';
+import 'package:art_vibes1/signup/login/Auth_Screen.dart';
+import 'package:art_vibes1/tracking/tracking_screen.dart';
+import 'package:art_vibes1/artist_upload_portfolio/upload_portfolio.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -35,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = [
     const HomeContent(),
-    const UpcomingPage(),
+    TicketsScreen(),
     const TrackingScreen(),
     const ProfileScreen(),
   ];
@@ -48,21 +51,18 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchUnreadNotificationsCount();
   }
 
-  // Initialize Firebase Cloud Messaging (FCM)
   Future<void> _initializeFCM() async {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       _showLocalNotification(
         message.notification?.title,
         message.notification?.body,
       );
-
       if (_auth.currentUser != null) {
         _saveNotificationToFirestore(message);
       }
     });
   }
 
-  // Display a local notification for foreground messages
   Future<void> _showLocalNotification(String? title, String? body) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -83,7 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Save notification to Firestore, with duplicate check
   Future<void> _saveNotificationToFirestore(RemoteMessage message) async {
     final String? messageId = message.messageId;
 
@@ -94,7 +93,6 @@ class _HomeScreenState extends State<HomeScreen> {
           .where('messageId', isEqualTo: messageId)
           .get();
 
-      // Check for duplicate notifications
       if (existingNotification.docs.isEmpty) {
         await _firestore.collection('notifications').add({
           'userId': _auth.currentUser!.uid,
@@ -102,13 +100,12 @@ class _HomeScreenState extends State<HomeScreen> {
           'body': message.notification?.body,
           'timestamp': FieldValue.serverTimestamp(),
           'status': 'unread',
-          'messageId': messageId, // Unique identifier to avoid duplicates
+          'messageId': messageId,
         });
       }
     }
   }
 
-  // Fetch unread notifications count for badge
   void _fetchUnreadNotificationsCount() {
     _firestore
         .collection('notifications')
@@ -122,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Fetch user's name from Firestore
   Future<void> _fetchUserName() async {
     User? user = _auth.currentUser;
     if (user != null) {
@@ -135,7 +131,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Handle navigation item tap
   void _onItemTapped(int index) {
     setState(() {
       _currentIndex = index;
@@ -173,7 +168,6 @@ class _HomeContentState extends State<HomeContent> {
     _fetchUserInfo();
   }
 
-  // Fetch user's name and role to check if they are an artist
   Future<void> _fetchUserInfo() async {
     User? user = _auth.currentUser;
     if (user != null) {
@@ -181,14 +175,49 @@ class _HomeContentState extends State<HomeContent> {
       if (userDoc.exists) {
         setState(() {
           _userName = userDoc.data()?['name'] ?? 'User';
-          _isArtist =
-              userDoc.data()?['role'] == 'artist'; // Check if user is an artist
+          _isArtist = userDoc.data()?['role'] == 'artist';
         });
       }
     }
   }
 
-  // Logout
+  Future<void> _checkLicenseAndNavigate(BuildContext context) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    DocumentSnapshot licenseDoc =
+        await _firestore.collection('licenses').doc(user.uid).get();
+
+    if (licenseDoc.exists && licenseDoc['status'] == 'approved') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EventCalendarScreen(
+            isArtist: true,
+            isArtistWithLicense: true,
+          ),
+        ),
+      );
+    } else if (_isArtist) {
+      // Only direct artists to LicenseUploadScreen if they lack an approved license
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => LicenseUploadScreen()),
+      );
+    } else {
+      // Redirect clients directly to EventCalendarScreen without license check
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EventCalendarScreen(
+            isArtist: false,
+            isArtistWithLicense: false,
+          ),
+        ),
+      );
+    }
+  }
+
   void _logOut(BuildContext context) async {
     await _auth.signOut();
     Navigator.pushReplacement(
@@ -197,7 +226,6 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  // Open notifications screen
   void _openNotifications() {
     Navigator.push(
       context,
@@ -333,7 +361,6 @@ class _HomeContentState extends State<HomeContent> {
               ),
             ),
             const SizedBox(height: 24.0),
-            // Show "Become an Artist" button only if user is not an artist
             if (!_isArtist)
               ElevatedButton(
                 onPressed: () {
@@ -375,15 +402,7 @@ class _HomeContentState extends State<HomeContent> {
                     context,
                     'Events Calendar',
                     'assets/images/image14.png',
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              EventCalendarScreen(isArtistWithLicense: true),
-                        ),
-                      );
-                    },
+                    () => _checkLicenseAndNavigate(context),
                   ),
                   _buildSectionCard(
                     context,

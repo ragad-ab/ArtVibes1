@@ -1,11 +1,11 @@
 import 'package:art_vibes1/profile/profile_screen.dart';
+import 'package:art_vibes1/screens/tickets/ticket.dart';
 import 'package:art_vibes1/tracking/tracking_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // Import for date formatting
 import 'package:url_launcher/url_launcher.dart'; // Import to handle launching URLs
 import 'home_screen.dart'; // Import HomeScreen
-import 'upcoming.dart'; // Import UpcomingPage
 
 class AppointmentDetails extends StatelessWidget {
   final Map<String, dynamic> eventData;
@@ -152,7 +152,7 @@ class AppointmentDetails extends StatelessWidget {
           } else if (index == 1) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const UpcomingPage()),
+              MaterialPageRoute(builder: (context) =>  TicketsScreen()),
             );
           } else if (index == 2) {
             Navigator.pushReplacement(
